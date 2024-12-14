@@ -22,12 +22,12 @@ const Footer = () => {
           GitHub repo for this site
         </a>
         <a 
-          href="https://newsapi.org/" 
+          href="https://newsdatahub.com/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="d-block"
         >
-          Powered by News API
+          Powered by News Data Hub
         </a>
       </div>
     </footer>
