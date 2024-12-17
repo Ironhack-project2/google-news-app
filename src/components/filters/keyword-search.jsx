@@ -1,25 +1,25 @@
 import React, { useState } from "react";
 
 const KeywordSearch = ({ setKeyword }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [input, setInput] = useState("");
 
-  const handleSearch = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setKeyword(searchTerm);
+    setKeyword(input.trim());
   };
 
   return (
-    <form className="d-flex" role="search" onSubmit={handleSearch}>
+    <form className="d-flex" onSubmit={handleSubmit}>
       <input
+        type="text"
         className="form-control me-2"
-        type="search"
-        placeholder="Search"
-        aria-label="Search"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Buscar palabras clave..."
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        aria-label="Buscar palabras clave"
       />
       <button className="btn btn-outline-success" type="submit">
-        Search
+        Buscar
       </button>
     </form>
   );

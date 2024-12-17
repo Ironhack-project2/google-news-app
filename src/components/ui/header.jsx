@@ -1,15 +1,15 @@
 import React from "react";
 import KeywordSearch from "../filters/keyword-search.jsx";
 
-function Header({ setKeyword }) {
+const Header = ({ setKeyword }) => {
   return (
-    <nav className="navbar bg-body-tertiary">
-      <div className="container-fluid">
-        <a className="navbar-brand">Google News App</a>
+    <header className="bg-primary text-white p-3">
+      <div className="container d-flex justify-content-between align-items-center">
+        <h1 className="h3">Google News App</h1>
         <KeywordSearch setKeyword={setKeyword} />
       </div>
-    </nav>
+    </header>
   );
-}
+};
 
 export default Header;
