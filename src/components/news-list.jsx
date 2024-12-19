@@ -6,19 +6,15 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
   const [articles, setArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const NEWSDATAHUB_API_KEY = "k_Bd2ILMACOlVls6Ss6_wdQwq3Y5M-B0dhW6fMmgdlI";
-  const NEWSAPI_API_KEY = "64ca2eb893b045fca825eeed4246c55f"; 
+  const NEWSAPI_API_KEY = "64ca2eb893b045fca825eeed4246c55f";
 
   const fetchNewsDataHub = async () => {
     try {
-      const params = {
-        query,
-        language,
-        country,
-      };
-
+      const params = { query, language, country };
       if (source) {
-        params.source = source; // Ajusta según la API
+        params.source = source;
       }
 
       const response = await axios.get("https://api.newsdatahub.com/v1/news", {
@@ -44,15 +40,17 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
       };
 
       if (source) {
-        params.sources = source; // NewsAPI usa 'sources' en plural, unifico
+        params.sources = source;
       }
 
       const response = await axios.get("https://newsapi.org/v2/top-headlines", { params });
 
-      return response.data?.articles?.map((article) => ({
-        ...article,
-        source_title: article.source.name,
-      })) || [];
+      return (
+        response.data?.articles?.map((article) => ({
+          ...article,
+          source_title: article.source.name,
+        })) || []
+      );
     } catch (error) {
       console.error("Error fetching NewsAPI:", error);
       return [];
@@ -68,10 +66,11 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
         fetchNewsApi(),
       ]);
 
-      // Combinar artículos y eliminar duplicados si es necesario
+      // Combinar las noticias de ambas fuentes
       const combinedArticles = [...newsDataHubArticles, ...newsApiArticles];
       setArticles(combinedArticles.slice(0, max));
     } catch (err) {
+      console.error("Error combinando las noticias:", err);
       setError("Error al cargar las noticias. Inténtalo de nuevo más tarde.");
       setArticles([]);
     } finally {
@@ -95,7 +94,7 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
           </button>
         </div>
       )}
-      
+
       {!isLoading && !error && articles.length === 0 && (
         <p className="text-center">No se encontraron noticias para esta búsqueda.</p>
       )}
