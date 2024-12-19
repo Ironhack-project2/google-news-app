@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const NewsCard = ({ article }) => {
   return (
@@ -14,7 +15,7 @@ const NewsCard = ({ article }) => {
           <small className="text-muted">Fuente: {article.source_title || "Desconocido"}</small>
         </p>
         <a
-          href={article.url}
+          href={article.article_link}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-primary"

@@ -14,6 +14,8 @@ function App() {
   const [selectedOutlets, setSelectedOutlets] = useState([]);
   const [availableOutlets, setAvailableOutlets] = useState([]);
 
+
+  
   return (
     <div className="d-flex flex-column min-vh-100">
       <Header setKeyword={setKeyword} />

@@ -5,7 +5,13 @@ const KeywordSearch = ({ setKeyword }) => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (searchTerm.trim() === "") return;
     setKeyword(searchTerm);
+  };
+  
+  const clearSearch = () => {
+    setSearchTerm("");
+    setKeyword("");
   };
 
   return (

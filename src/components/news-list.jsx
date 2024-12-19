@@ -6,6 +6,9 @@ function NewsList({ query = '', language = 'es', country = 'es', max = 15 }) {
   const [articles, setArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [keyword, setKeyword] = useState("");
+  const [data, setData] = useState([]);
+   const [filteredData, setFIlteredData] = useState([]);
   const API_KEY = 'k_Bd2ILMACOlVls6Ss6_wdQwq3Y5M-B0dhW6fMmgdlI';
 
   useEffect(() => {
