@@ -1,43 +1,31 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import KeywordSearch from "../filters/keyword-search.jsx";
 
-const Header = () => {
+const Header = ({ articles }) => {
   const [keyword, setKeyword] = useState("");
-  const [Data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  const [filteredData, setFilteredData] = useState(articles || []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("https://api.newsdatahub.com/v1/news");
-        const newsData = response.data.data;
-        console.log("Data:", newsData);
-
-        setData(newsData);
-        setFilteredData(newsData);
-      } catch (error) {
-        console.error("Error fetching data from API:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const results = Data.filter(
+  // Filtrar artículos en tiempo real según la palabra clave
+  const filterArticles = (keyword) => {
+    const results = articles.filter(
       (item) =>
         item.title.toLowerCase().includes(keyword.toLowerCase()) ||
-        item.description.toLowerCase().includes(keyword.toLowerCase())
+        (item.description && item.description.toLowerCase().includes(keyword.toLowerCase()))
     );
     setFilteredData(results);
-  }, [keyword, Data]);
+  };
+
+  // Manejar cambios en la palabra clave
+  const handleKeywordChange = (newKeyword) => {
+    setKeyword(newKeyword);
+    filterArticles(newKeyword);
+  };
 
   return (
     <header className="bg-primary text-white p-3">
       <div className="container d-flex justify-content-between align-items-center">
         <h1 className="h3">Google News App</h1>
-        <KeywordSearch setKeyword={setKeyword} />
+        <KeywordSearch setKeyword={handleKeywordChange} />
       </div>
       <div className="container mt-3">
         {filteredData.length > 0 ? (
@@ -45,12 +33,12 @@ const Header = () => {
             {filteredData.map((item, index) => (
               <li key={index} className="list-group-item">
                 <h5>{item.title}</h5>
-                <p>{item.description}</p>
+                <p>{item.description || "Sin descripción disponible."}</p>
               </li>
             ))}
           </ul>
         ) : (
-          <p>No results found</p>
+          <p>No se encontraron resultados.</p>
         )}
       </div>
     </header>

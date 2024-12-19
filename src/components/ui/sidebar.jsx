@@ -1,13 +1,11 @@
 import React from "react";
-import SourceFilter from "../filters/source-filter.jsx";
+import SourceFilter from "../filters/source-filter";
 
-const Sidebar = ({ setSelectedOutlets, country, language, setSelectedSource }) => {
+const Sidebar = ({ sources, setSelectedSource }) => {
   return (
-    <div className="p-3">
+    <div className="sidebar bg-light p-3">
       <SourceFilter
-        country={country}
-        language={language}
-        setSelectedOutlets={setSelectedOutlets}
+        availableOutlets={sources || []}
         setSelectedSource={setSelectedSource}
       />
     </div>

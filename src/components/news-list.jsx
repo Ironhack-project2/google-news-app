@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import NewsCard from "./news-card";
+import Sidebar from "./ui/sidebar";
 
 function NewsList({ query = "", language = "es", country = "es", source = "", max = 15 }) {
   const [articles, setArticles] = useState([]);
+  const [sources, setSources] = useState([]);
+  const [selectedSource, setSelectedSource] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -13,9 +16,7 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
   const fetchNewsDataHub = async () => {
     try {
       const params = { query, language, country };
-      if (source) {
-        params.source = source;
-      }
+      if (source) params.source = source;
 
       const response = await axios.get("https://api.newsdatahub.com/v1/news", {
         headers: { "X-Api-Key": NEWSDATAHUB_API_KEY },
@@ -38,10 +39,7 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
         q: query,
         pageSize: max,
       };
-
-      if (source) {
-        params.sources = source;
-      }
+      if (source) params.sources = source;
 
       const response = await axios.get("https://newsapi.org/v2/top-headlines", { params });
 
@@ -66,9 +64,22 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
         fetchNewsApi(),
       ]);
 
-      // Combinar las noticias de ambas fuentes
       const combinedArticles = [...newsDataHubArticles, ...newsApiArticles];
       setArticles(combinedArticles.slice(0, max));
+
+      const combinedSources = Array.from(
+        new Map(
+          combinedArticles
+            .map((article) => ({
+              name: article.source_title || "Fuente desconocida",
+              id: article.source_title || "unknown",
+            }))
+            .filter((source) => source.name && source.id)
+            .map((source) => [source.name, source])
+        ).values()
+      );
+
+      setSources(combinedSources);
     } catch (err) {
       console.error("Error combinando las noticias:", err);
       setError("Error al cargar las noticias. Inténtalo de nuevo más tarde.");
@@ -83,28 +94,38 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
   }, [query, language, country, source, max]);
 
   return (
-    <div className="news-list">
-      {isLoading && <p className="text-center">Cargando noticias...</p>}
-      
-      {error && (
-        <div className="text-center">
-          <p className="text-danger">{error}</p>
-          <button className="btn btn-primary" onClick={fetchAllNews}>
-            Reintentar
-          </button>
-        </div>
-      )}
-
-      {!isLoading && !error && articles.length === 0 && (
-        <p className="text-center">No se encontraron noticias para esta búsqueda.</p>
-      )}
-
+    <div className="container-fluid">
       <div className="row">
-        {articles.map((article, index) => (
-          <div key={index} className="col-md-4 mb-4">
-            <NewsCard article={article} />
+        {/* Barra lateral */}
+        <div className="col-md-3">
+          <Sidebar sources={sources} setSelectedSource={setSelectedSource} />
+        </div>
+        {/* Lista de noticias */}
+        <div className="col-md-9">
+          {isLoading && <p className="text-center">Cargando noticias...</p>}
+          {error && (
+            <div className="text-center">
+              <p className="text-danger">{error}</p>
+              <button className="btn btn-primary" onClick={fetchAllNews}>
+                Reintentar
+              </button>
+            </div>
+          )}
+          {!isLoading && !error && articles.length === 0 && (
+            <p className="text-center">No se encontraron noticias para esta búsqueda.</p>
+          )}
+          <div className="row">
+            {articles
+              .filter((article) =>
+                selectedSource ? article.source_title === selectedSource : true
+              )
+              .map((article, index) => (
+                <div key={index} className="col-md-4 mb-4">
+                  <NewsCard article={article} />
+                </div>
+              ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
