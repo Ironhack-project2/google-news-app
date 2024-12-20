@@ -2,26 +2,29 @@ import React from "react";
 
 const SourceFilter = ({ availableOutlets = [], setSelectedSource }) => {
   if (!Array.isArray(availableOutlets)) {
-    console.error("availableOutlets debe ser un array");
-    return <p className="text-danger">Error cargando las fuentes.</p>;
+    return <p className="text-danger">Error al cargar las fuentes.</p>;
   }
 
   const handleSelection = (source) => {
     setSelectedSource(source.id);
   };
 
+  const OutletButton = ({ outlet }) => (
+    <button
+      className="list-group-item list-group-item-action"
+      onClick={() => handleSelection(outlet)}
+    >
+      <strong>{outlet.name}</strong>
+    </button>
+  );
+
   return (
     <div className="list-group">
       <h5 className="mb-3">Medios Disponibles</h5>
       {availableOutlets.length > 0 ? (
-        availableOutlets.map((outlet, index) => (
-          <div key={index} className="mb-2">
-            <button
-              className="list-group-item list-group-item-action"
-              onClick={() => handleSelection(outlet)}
-            >
-              <strong>{outlet.name}</strong>
-            </button>
+        availableOutlets.map((outlet) => (
+          <div key={outlet.id || outlet.name} className="mb-2">
+            <OutletButton outlet={outlet} />
           </div>
         ))
       ) : (

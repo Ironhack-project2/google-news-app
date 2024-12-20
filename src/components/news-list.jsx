@@ -3,19 +3,27 @@ import axios from "axios";
 import NewsCard from "./news-card";
 import Sidebar from "./ui/sidebar";
 
-function NewsList({ query = "", language = "es", country = "es", source = "", max = 15 }) {
+const getLanguageParams = (language) => (language ? { language } : {});
+const getQueryParams = (query) => (query ? { query } : {});
+
+function NewsList({ query = "", language = "es", source = "", max = 20 }) {
   const [articles, setArticles] = useState([]);
   const [sources, setSources] = useState([]);
   const [selectedSource, setSelectedSource] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  //  TODO: check how to use env var in React projects
   const NEWSDATAHUB_API_KEY = "k_Bd2ILMACOlVls6Ss6_wdQwq3Y5M-B0dhW6fMmgdlI";
   const NEWSAPI_API_KEY = "64ca2eb893b045fca825eeed4246c55f";
 
   const fetchNewsDataHub = async () => {
     try {
-      const params = { query, language, country };
+      const params = {
+        ...getQueryParams(query),
+        ...getLanguageParams(language),
+        limit: max 
+      };
       if (source) params.source = source;
 
       const response = await axios.get("https://api.newsdatahub.com/v1/news", {
@@ -34,10 +42,9 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
     try {
       const params = {
         apiKey: NEWSAPI_API_KEY,
-        language,
-        country,
-        q: query,
-        pageSize: max,
+        ...getQueryParams(query),
+        ...getLanguageParams(language),
+        pageSize: max
       };
       if (source) params.sources = source;
 
@@ -65,6 +72,10 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
       ]);
 
       const combinedArticles = [...newsDataHubArticles, ...newsApiArticles];
+
+      console.log('combinedArticles length', combinedArticles.length);
+
+      //  TODO: check this state changing once search word changed
       setArticles(combinedArticles.slice(0, max));
 
       const combinedSources = Array.from(
@@ -91,16 +102,14 @@ function NewsList({ query = "", language = "es", country = "es", source = "", ma
 
   useEffect(() => {
     fetchAllNews();
-  }, [query, language, country, source, max]);
+  }, [query, language, source, max]);
 
   return (
     <div className="container-fluid">
       <div className="row">
-        {/* Barra lateral */}
         <div className="col-md-3">
           <Sidebar sources={sources} setSelectedSource={setSelectedSource} />
         </div>
-        {/* Lista de noticias */}
         <div className="col-md-9">
           {isLoading && <p className="text-center">Cargando noticias...</p>}
           {error && (

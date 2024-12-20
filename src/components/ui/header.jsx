@@ -1,45 +1,46 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import KeywordSearch from "../filters/keyword-search.jsx";
+import LanguageSearch from "../filters/language-search.jsx"; 
 
-const Header = ({ articles }) => {
-  const [keyword, setKeyword] = useState("");
-  const [filteredData, setFilteredData] = useState(articles || []);
-
-  // Filtrar artículos en tiempo real según la palabra clave
-  const filterArticles = (keyword) => {
-    const results = articles.filter(
-      (item) =>
-        item.title.toLowerCase().includes(keyword.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(keyword.toLowerCase()))
+const Header = ({ articles = [], keyword, setKeyword, setLanguage }) => {
+  const filteredData = useMemo(() => {
+    if (!keyword) return articles;
+    return articles.filter((item) =>
+      item.title.toLowerCase().includes(keyword.toLowerCase()) ||
+      (item.description && item.description.toLowerCase().includes(keyword.toLowerCase()))
     );
-    setFilteredData(results);
-  };
+  }, [keyword, articles]);
 
-  // Manejar cambios en la palabra clave
   const handleKeywordChange = (newKeyword) => {
     setKeyword(newKeyword);
-    filterArticles(newKeyword);
+  };
+
+  const handleTitleClick = () => {
+    window.location.reload();
   };
 
   return (
     <header className="bg-primary text-white p-3">
       <div className="container d-flex justify-content-between align-items-center">
-        <h1 className="h3">Google News App</h1>
-        <KeywordSearch setKeyword={handleKeywordChange} />
+        <h1 className="h3 mb-0" onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+          Google News App
+        </h1>
+        <div className="d-flex align-items-center">
+          <KeywordSearch setKeyword={handleKeywordChange} />
+          <LanguageSearch setLanguage={setLanguage} />
+        </div>
       </div>
       <div className="container mt-3">
         {filteredData.length > 0 ? (
           <ul className="list-group">
-            {filteredData.map((item, index) => (
-              <li key={index} className="list-group-item">
+            {filteredData.map((item) => (
+              <li key={item.title} className="list-group-item">
                 <h5>{item.title}</h5>
                 <p>{item.description || "Sin descripción disponible."}</p>
               </li>
             ))}
           </ul>
-        ) : (
-          <p>No se encontraron resultados.</p>
-        )}
+        ) : null}
       </div>
     </header>
   );

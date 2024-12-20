@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const languages = [
   { code: "en", label: "Inglés" },
@@ -7,23 +7,33 @@ const languages = [
 ];
 
 const LanguageSearch = ({ setLanguage }) => {
+  const [selectedLanguage, setSelectedLanguage] = useState("es");
+
+  const handleChange = (code) => {
+    setSelectedLanguage(code);
+    setLanguage(code);
+  };
+
   return (
-    <div className="filter-item mb-3">
-      <label htmlFor="language" className="form-label">
-        Seleccionar Idioma:
-      </label>
-      <select
-        id="language"
-        className="form-select"
-        onChange={(e) => setLanguage(e.target.value)}
-        defaultValue="es"
-      >
+    <div className="ms-2">
+      <div className="form-label mb-0 me-2">Seleccionar Idioma:</div>
+      <div className="d-flex gap-3">
         {languages.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.label}
-          </option>
+          <div key={lang.code} className="form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id={`lang-${lang.code}`}
+              value={lang.code}
+              checked={selectedLanguage === lang.code}
+              onChange={() => handleChange(lang.code)}
+            />
+            <label className="form-check-label" htmlFor={`lang-${lang.code}`}>
+              {lang.label}
+            </label>
+          </div>
         ))}
-      </select>
+      </div>
     </div>
   );
 };
