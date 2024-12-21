@@ -7,7 +7,7 @@ const Footer = () => {
     <footer className="bg-light text-center py-3 mt-auto">
       <div className="container">
         <p className="mb-1">
-          Website &copy; Mar & Monica {currentYear}
+          Website &copy; Mar & Mónica {currentYear}
         </p>
         <p className="mb-1">
           All other materials are copyrighted 
@@ -21,14 +21,23 @@ const Footer = () => {
         >
           GitHub repo for this site
         </a>
-        <a 
-          href="https://newsdatahub.com/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="d-block"
-        >
-          Powered by News Data Hub
-        </a>
+        <p className="mb-1">
+          Powered by <a 
+            href="https://newsdatahub.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="d-inline-block"
+          >
+            News Data Hub
+          </a> and <a 
+            href="https://newsapi.org/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="d-inline-block"
+          >
+            News API
+          </a>
+        </p>
       </div>
     </footer>
   );

@@ -21,6 +21,7 @@ function NewsList({ query = "", language = "en", source = "", max = 20 }) {
       const params = {
         ...getQueryParams(query),
         ...getLanguageParams(language),
+
         limit: max 
       };
       if (source) params.source = source;

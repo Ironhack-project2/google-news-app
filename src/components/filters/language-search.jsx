@@ -1,3 +1,4 @@
+// language-search.jsx
 import React, { useState } from "react";
 
 const languages = [
@@ -21,9 +22,10 @@ const LanguageSearch = ({ setLanguage }) => {
         {languages.map((lang) => (
           <div key={lang.code} className="form-check">
             <input
-              type="checkbox"
+              type="radio" 
               className="form-check-input"
               id={`lang-${lang.code}`}
+              name="language" 
               value={lang.code}
               checked={selectedLanguage === lang.code}
               onChange={() => handleChange(lang.code)}

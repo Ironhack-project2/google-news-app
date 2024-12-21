@@ -20,7 +20,7 @@ const Header = ({ keyword, setKeyword, setLanguage, language }) => {
         </h1>
         <div className="d-flex align-items-center">
           <KeywordSearch setKeyword={setKeyword} keyword={keyword} />
-          <LanguageSearch setLanguage={setLanguage} language={language} />
+          <LanguageSearch currentLanguage={language} setLanguage={setLanguage} />
         </div>
       </div>
     </header>
