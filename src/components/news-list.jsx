@@ -6,16 +6,15 @@ import Sidebar from "./ui/sidebar";
 const getLanguageParams = (language) => (language ? { language } : {});
 const getQueryParams = (query) => (query ? { query } : {});
 
-function NewsList({ query = "", language = "es", source = "", max = 20 }) {
+function NewsList({ query = "", language = "en", source = "", max = 20 }) {
   const [articles, setArticles] = useState([]);
   const [sources, setSources] = useState([]);
-  const [selectedSource, setSelectedSource] = useState("");
+  const [selectedSource, setSelectedSource] = useState(source || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  //  TODO: check how to use env var in React projects
-  const NEWSDATAHUB_API_KEY = "k_Bd2ILMACOlVls6Ss6_wdQwq3Y5M-B0dhW6fMmgdlI";
-  const NEWSAPI_API_KEY = "64ca2eb893b045fca825eeed4246c55f";
+  const NEWSDATAHUB_API_KEY = import.meta.env.VITE_NEWSDATAHUB_API_KEY;
+  const NEWSAPI_API_KEY = import.meta.env.VITE_NEWSAPI_API_KEY;
 
   const fetchNewsDataHub = async () => {
     try {
@@ -75,8 +74,15 @@ function NewsList({ query = "", language = "es", source = "", max = 20 }) {
 
       console.log('combinedArticles length', combinedArticles.length);
 
-      //  TODO: check this state changing once search word changed
-      setArticles(combinedArticles.slice(0, max));
+      // Filtrar artículos que contengan la keyword en el título o descripción
+      const filteredArticles = combinedArticles.filter((article) => {
+        const keyword = query.toLowerCase();
+        const title = article.title ? article.title.toLowerCase() : "";
+        const description = article.description ? article.description.toLowerCase() : "";
+        return title.includes(keyword) || description.includes(keyword);
+      });
+
+      setArticles(filteredArticles.slice(0, max));
 
       const combinedSources = Array.from(
         new Map(
@@ -108,7 +114,9 @@ function NewsList({ query = "", language = "es", source = "", max = 20 }) {
     <div className="container-fluid">
       <div className="row">
         <div className="col-md-3">
-          <Sidebar sources={sources} setSelectedSource={setSelectedSource} />
+          <Sidebar sources={sources} setSelectedSource={(src) => {
+            setSelectedSource(src);
+          }} />
         </div>
         <div className="col-md-9">
           {isLoading && <p className="text-center">Cargando noticias...</p>}

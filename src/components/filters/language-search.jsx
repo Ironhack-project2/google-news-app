@@ -7,7 +7,7 @@ const languages = [
 ];
 
 const LanguageSearch = ({ setLanguage }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState("es");
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
 
   const handleChange = (code) => {
     setSelectedLanguage(code);
