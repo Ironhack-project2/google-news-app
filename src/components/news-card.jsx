@@ -13,7 +13,11 @@ const NewsCard = ({ article }) => {
 
   return (
     <div className="card h-100">
-      <img src={imageURL} className="card-img-top" alt={article.title || "Noticia"} />
+      <img
+        src={imageURL}
+        className="card-img-top"
+        alt={article.title || "Noticia"}
+      />
       <div className="card-body">
         <h5 className="card-title">{article.title}</h5>
         <p className="card-text">
@@ -22,12 +26,14 @@ const NewsCard = ({ article }) => {
             : "Sin descripción disponible."}
         </p>
         <p className="card-text">
-          <small className="text-muted">Fuente: {article.source_title || "Desconocido"}</small>
+          <small className="text-muted">
+            Fuente: {article.source_title || "Desconocido"}
+          </small>
         </p>
         <p className="card-text">
           <small className="text-muted">Fecha: {fecha}</small>
         </p>
-        <a href={link} className="btn btn-primary">
+        <a href={link} className="btn btn-primary" target="_blank" rel="noreferrer">
           Ver más
         </a>
       </div>

@@ -1,136 +1,130 @@
+// src/components/news-list.jsx
 import { useEffect, useState } from "react";
-import axios from "axios";
-import NewsCard from "./news-card";
-import Sidebar from "./ui/sidebar";
-
-const getLanguageParams = (language) => (language ? { language } : {});
-const getQueryParams = (query) => (query ? { query } : {});
+import {
+  fetchNewsDataHub,
+  fetchNewsApi,
+  fetchApiTube,
+} from "./params/newsService"; // Ruta correcta dentro de components
+import NewsCard from "./news-card"; // Está directamente en components
+import Sidebar from "./ui/sidebar"; // Asumiendo que sidebar está en components/ui
+import Pagination from "./ui/pagination"; // Nuevo componente de paginación
 
 function NewsList({ query = "", language = "en", source = "", max = 20 }) {
   const [articles, setArticles] = useState([]);
   const [sources, setSources] = useState([]);
-  const [selectedSource, setSelectedSource] = useState(source || "");
+  const [selectedSource, setSelectedSource] = useState(source);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1); // Página actual
+  const [totalPages, setTotalPages] = useState(1); // Total de páginas
 
+  // Variables de entorno para las dos APIs
   const NEWSDATAHUB_API_KEY = import.meta.env.VITE_NEWSDATAHUB_API_KEY;
   const NEWSAPI_API_KEY = import.meta.env.VITE_NEWSAPI_API_KEY;
 
-  const fetchNewsDataHub = async () => {
-    try {
-      const params = {
-        ...getQueryParams(query),
-        ...getLanguageParams(language),
-
-        limit: max 
-      };
-      if (source) params.source = source;
-
-      const response = await axios.get("https://api.newsdatahub.com/v1/news", {
-        headers: { "X-Api-Key": NEWSDATAHUB_API_KEY },
-        params,
-      });
-
-      return response.data?.data || [];
-    } catch (error) {
-      console.error("Error fetching NewsDataHub:", error);
-      return [];
-    }
-  };
-
-  const fetchNewsApi = async () => {
-    try {
-      const params = {
-        apiKey: NEWSAPI_API_KEY,
-        ...getQueryParams(query),
-        ...getLanguageParams(language),
-        pageSize: max
-      };
-      if (source) params.sources = source;
-
-      const response = await axios.get("https://newsapi.org/v2/top-headlines", { params });
-
-      return (
-        response.data?.articles?.map((article) => ({
-          ...article,
-          source_title: article.source.name,
-        })) || []
-      );
-    } catch (error) {
-      console.error("Error fetching NewsAPI:", error);
-      return [];
-    }
-  };
-
-  const fetchAllNews = async () => {
+  // Función que combina las noticias de las tres fuentes
+  const fetchAllNews = async (page = 1) => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const [newsDataHubArticles, newsApiArticles] = await Promise.all([
-        fetchNewsDataHub(),
-        fetchNewsApi(),
+      // Ejecutar las tres peticiones en paralelo
+      const [newsDataHubResponse, newsApiResponse, apiTubeResponse] = await Promise.all([
+        fetchNewsDataHub(query, language, selectedSource, max, page, NEWSDATAHUB_API_KEY),
+        fetchNewsApi(query, language, selectedSource, max, page, NEWSAPI_API_KEY),
+        fetchApiTube(query, language, max, page),
       ]);
 
-      const combinedArticles = [...newsDataHubArticles, ...newsApiArticles];
+      // Combinar artículos de las tres fuentes
+      const combinedArticles = [
+        ...newsDataHubResponse.articles,
+        ...newsApiResponse.articles,
+        ...apiTubeResponse.articles,
+      ];
 
-      console.log('combinedArticles length', combinedArticles.length);
-
-      // Filtrar artículos que contengan la keyword en el título o descripción
+      // Filtrar por 'query' en título o descripción (si es necesario)
       const filteredArticles = combinedArticles.filter((article) => {
-        const keyword = query.toLowerCase();
-        const title = article.title ? article.title.toLowerCase() : "";
-        const description = article.description ? article.description.toLowerCase() : "";
-        return title.includes(keyword) || description.includes(keyword);
+        const kw = query.toLowerCase();
+        const title = article.title?.toLowerCase() || "";
+        const description = article.description?.toLowerCase() || "";
+        return title.includes(kw) || description.includes(kw);
       });
 
+      // Limitar a los primeros 'max' artículos
       setArticles(filteredArticles.slice(0, max));
 
+      // Obtener fuentes sin duplicar
       const combinedSources = Array.from(
         new Map(
           combinedArticles
-            .map((article) => ({
-              name: article.source_title || "Fuente desconocida",
-              id: article.source_title || "unknown",
+            .map((art) => ({
+              name: art.source_title || "Fuente desconocida",
+              id: art.source_title || "unknown",
             }))
-            .filter((source) => source.name && source.id)
-            .map((source) => [source.name, source])
+            .filter((src) => src.name && src.id)
+            .map((src) => [src.name, src])
         ).values()
       );
 
       setSources(combinedSources);
+
+      // Calcular total de páginas basado en el menor totalResults de las APIs
+      const totalResultsArray = [
+        newsDataHubResponse.totalResults,
+        newsApiResponse.totalResults,
+        apiTubeResponse.totalResults,
+      ];
+
+      // Si alguna API no proporciona totalResults, manejamos el cálculo en base a las disponibles
+      const availableTotalResults = totalResultsArray.filter((tr) => tr > 0);
+      const minTotalResults = availableTotalResults.length > 0 ? Math.min(...availableTotalResults) : 0;
+
+      const calculatedTotalPages = Math.ceil(minTotalResults / max) || 1;
+      setTotalPages(calculatedTotalPages);
     } catch (err) {
-      console.error("Error combinando las noticias:", err);
-      setError("Error al cargar las noticias. Inténtalo de nuevo más tarde.");
+      console.error("Error combinando noticias:", err);
+      setError("Error al cargar las noticias. Por favor, inténtalo de nuevo más tarde.");
       setArticles([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Ejecutar la búsqueda cuando cambien query, language, source o max
   useEffect(() => {
-    fetchAllNews();
-  }, [query, language, source, max]);
+    setCurrentPage(1); // Reiniciar a la página 1 cuando cambian los filtros
+    fetchAllNews(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, language, selectedSource, max]);
+
+  // Manejar cambio de página
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchAllNews(page);
+  };
 
   return (
     <div className="container-fluid">
       <div className="row">
+        {/* Barra lateral para filtrar fuentes */}
         <div className="col-md-3">
-          <Sidebar sources={sources} setSelectedSource={(src) => {
-            setSelectedSource(src);
-          }} />
+          <Sidebar sources={sources} setSelectedSource={setSelectedSource} />
         </div>
+        {/* Lista de noticias */}
         <div className="col-md-9">
-          {isLoading && <p className="text-center">Cargando noticias...</p>}
+          {isLoading && <p className="text-center">Cargando noticias…</p>}
           {error && (
             <div className="text-center">
               <p className="text-danger">{error}</p>
-              <button className="btn btn-primary" onClick={fetchAllNews}>
+              <button className="btn btn-primary" onClick={() => fetchAllNews(currentPage)}>
                 Reintentar
               </button>
             </div>
           )}
           {!isLoading && !error && articles.length === 0 && (
-            <p className="text-center">No se encontraron noticias para esta búsqueda.</p>
+            <p className="text-center">
+              No se encontraron noticias para esta búsqueda.
+            </p>
           )}
           <div className="row">
             {articles
@@ -142,6 +136,10 @@ function NewsList({ query = "", language = "en", source = "", max = 20 }) {
                   <NewsCard article={article} />
                 </div>
               ))}
+          </div>
+          {/* Controles de Paginación */}
+          <div className="d-flex justify-content-center">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </div>
         </div>
       </div>

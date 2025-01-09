@@ -7,11 +7,10 @@ import NewsList from "./components/news-list.jsx";
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Extraemos los parámetros de búsqueda de la URL o usamos valores por defecto
   const language = searchParams.get("language") || "en";
   const keyword = searchParams.get("query") || "";
   const selectedSource = searchParams.get("source") || "";
-  const max = parseInt(searchParams.get("max")) || 20;
+  const max = parseInt(searchParams.get("max") || "20", 10);
 
   // Función para actualizar los parámetros de búsqueda
   const updateSearchParams = (newParams) => {

@@ -5,8 +5,8 @@ const SourceFilter = ({ availableOutlets = [], setSelectedSource }) => {
     return <p className="text-danger">Error al cargar las fuentes.</p>;
   }
 
-  const handleSelection = (source) => {
-    setSelectedSource(source.id);
+  const handleSelection = (srcObj) => {
+    setSelectedSource(srcObj.id);
   };
 
   const OutletButton = ({ outlet }) => (
