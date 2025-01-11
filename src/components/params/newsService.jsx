@@ -48,29 +48,33 @@ export async function fetchNewsApi(query, language, source, max, page, apiKey) {
     }
   }
 
-// Función para fetch APITube a través del proxy de Vite con paginación
-export async function fetchApiTube(query, language, max, page) {
+  export async function fetchApiTube(query, language, source, max, page) {
     try {
-      const response = await axios.get("/apitube", { // Usamos la ruta proxy
-        params: {
-          query,
-          language,
-          limit: max,
-          page,
-        },
-      });
+      const params = {
+        query,
+        language,
+        limit: max,
+        page,
+      };
+    
+      if (source) {
+        params.source = source; 
+      }
+    
+      const response = await axios.get("/apitube", { params });
+    
       return {
         articles: response.data?.articles?.map((article) => ({
           ...article,
           source_title: article.source?.name || "APITube",
         })) || [],
-        totalResults: response.data?.totalResults || 0, // Ajusta según la respuesta de la API
+        totalResults: response.data?.totalResults || 0,
       };
     } catch (error) {
-      console.error("Error fetching APITube:", error.response?.data || error.message);
+      console.error("Error fetching APITube:", error.response ? error.response.data : error.message);
       return {
         articles: [],
         totalResults: 0,
       };
     }
-  }
+  }  

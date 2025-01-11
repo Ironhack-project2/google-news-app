@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from "react";
-import "animate.css"; // Asegúrate de tener animate.css instalado y correctamente importado
-
+import "animate.css"; 
 const KeywordSearch = ({ setKeyword, keyword }) => {
   const [input, setInput] = useState(keyword);
-
   useEffect(() => {
     setInput(keyword);
   }, [keyword]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedInput = input.trim();
     setKeyword(trimmedInput);
   };
-
   const clearSearch = () => {
     setInput("");
     setKeyword("");
   };
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -67,5 +62,4 @@ const KeywordSearch = ({ setKeyword, keyword }) => {
     </form>
   );
 };
-
 export default KeywordSearch;

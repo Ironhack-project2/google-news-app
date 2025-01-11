@@ -6,9 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/apitube": {
-        target: "http://localhost:3001", // Dirección del backend
+        target: "http://localhost:3001",
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path, 
       },
     },
   },

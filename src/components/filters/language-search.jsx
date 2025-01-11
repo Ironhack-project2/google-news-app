@@ -1,40 +1,36 @@
-import React, { useState } from "react";
+import React from "react";
+import Select from "react-select";
 
 const languages = [
-  { code: "en", label: "Inglés" },
-  { code: "es", label: "Español" },
-  { code: "fr", label: "Francés" },
+  { value: "en", label: "Inglés" },
+  { value: "es", label: "Español" },
+  { value: "fr", label: "Francés" },
 ];
 
 const LanguageSearch = ({ setLanguage, currentLanguage }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage || "en");
+  const selectedOption =
+    languages.find((lang) => lang.value === currentLanguage) || languages[0];
 
-  const handleChange = (code) => {
-    setSelectedLanguage(code);
-    setLanguage(code);
+  const handleChange = (selectedOption) => {
+    setLanguage(selectedOption.value);
   };
 
   return (
-    <div className="ms-2">
-      <div className="form-label mb-0 me-2">Seleccionar Idioma:</div>
-      <div className="d-flex gap-3">
-        {languages.map((lang) => (
-          <div key={lang.code} className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              id={`lang-${lang.code}`}
-              name="language"
-              value={lang.code}
-              checked={selectedLanguage === lang.code}
-              onChange={() => handleChange(lang.code)}
-            />
-            <label className="form-check-label" htmlFor={`lang-${lang.code}`}>
-              {lang.label}
-            </label>
-          </div>
-        ))}
-      </div>
+    <div className="ms-2 p-2">
+      <div className="form-label mb-1">Seleccionar Idioma:</div>
+      <Select
+        value={selectedOption}
+        options={languages}
+        onChange={handleChange}
+        styles={{
+          control: (base) => ({
+            ...base,
+            backgroundColor: "#F8F9FA",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }),
+        }}
+      />
     </div>
   );
 };

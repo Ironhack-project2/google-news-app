@@ -1,47 +1,58 @@
-// src/components/ui/sidebar.jsx
 import React, { useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import SourceFilter from "../filters/source-filter";
+
+const EXCLUDED_NAMES = ["[Removed]"];
 
 const Sidebar = ({ sources, setSelectedSource }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const excludedNames = ["[Removed]"];
-
   const sortedFilteredSources = useMemo(() => {
-    if (!sources) return [];
+    if (!Array.isArray(sources)) {
+      console.warn("El prop 'sources' no es un array:", sources);
+      return [];
+    }
 
-    let filteredSources = sources.filter((src) => {
+    // Filtrar las fuentes excluyendo las definidas en EXCLUDED_NAMES
+    const filteredSources = sources.filter((src) => {
       if (typeof src === "object" && src !== null && "name" in src) {
-        return !excludedNames.includes(src.name);
+        return !EXCLUDED_NAMES.includes(src.name);
       }
       if (typeof src === "string") {
-        return !excludedNames.includes(src);
+        return !EXCLUDED_NAMES.includes(src);
       }
       return true;
     });
 
     if (filteredSources.length === 0) return [];
 
-    // Si el primer elemento es un objeto con 'name'
+    // Crear una copia del array para evitar mutación in-place
+    const sourcesCopy = [...filteredSources];
+
+    // Determinar el tipo de elementos en sourcesCopy y ordenar en consecuencia
     if (
-      typeof filteredSources[0] === "object" &&
-      filteredSources[0] !== null &&
-      "name" in filteredSources[0]
+      typeof sourcesCopy[0] === "object" &&
+      sourcesCopy[0] !== null &&
+      "name" in sourcesCopy[0]
     ) {
-      return filteredSources.sort((a, b) =>
+      sourcesCopy.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
       );
-    }
-
-    // Si son strings, los ordenamos
-    if (typeof filteredSources[0] === "string") {
-      return filteredSources.sort((a, b) =>
+    } else if (typeof sourcesCopy[0] === "string") {
+      sourcesCopy.sort((a, b) =>
         a.localeCompare(b, undefined, { sensitivity: "base" })
       );
+    } else {
+      console.warn("Formato inesperado en 'sourcesCopy':", sourcesCopy);
     }
 
-    return filteredSources;
-  }, [sources, excludedNames]);
+    return sourcesCopy;
+  }, [sources]);
+
+  // Depuración: Verificar el contenido de sortedFilteredSources
+  useMemo(() => {
+    console.log("sortedFilteredSources:", sortedFilteredSources);
+  }, [sortedFilteredSources]);
 
   return (
     <div
@@ -50,7 +61,12 @@ const Sidebar = ({ sources, setSelectedSource }) => {
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ transition: "background-color 0.3s ease" }}
+      style={{ 
+        transition: "background-color 0.3s ease",
+        maxHeight: "calc(100vh - 150px)",
+        overflowY: "auto",
+        borderRight: "1px solid #ddd",  
+      }}
     >
       <SourceFilter
         availableOutlets={sortedFilteredSources}
@@ -58,6 +74,11 @@ const Sidebar = ({ sources, setSelectedSource }) => {
       />
     </div>
   );
+};
+
+Sidebar.propTypes = {
+  sources: PropTypes.array.isRequired,
+  setSelectedSource: PropTypes.func.isRequired,
 };
 
 export default Sidebar;
