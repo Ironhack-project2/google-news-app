@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   fetchNewsDataHub,
   fetchNewsApi,
@@ -7,6 +7,21 @@ import {
 import NewsCard from "./news-card";
 import Sidebar from "./ui/sidebar";
 import Pagination from "./ui/pagination";
+
+// Función para decodificar repetidamente (maneja '%2520' -> '%20' -> ' ')
+function safeDecode(raw) {
+  let result = raw;
+  try {
+    while (true) {
+      const temp = decodeURIComponent(result);
+      if (temp === result) break;
+      result = temp;
+    }
+  } catch {
+    // Si falla, usamos lo que tengamos hasta ahora
+  }
+  return result.trim();
+}
 
 function NewsList({
   query = "",
@@ -23,54 +38,170 @@ function NewsList({
   const [error, setError] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Función para combinar y gestionar las noticias de las tres fuentes
+  // Cache para no llamar a las APIs reiteradamente
+  const cache = useRef({});
+
+  // Filtra artículos localmente según "source"
+  const filterBySource = (arts, src) => {
+    if (!src) return arts;
+    const decodedSource = safeDecode(src);
+    const normalize = (str) =>
+      str.toLowerCase().replace(/^the\s+/, "").replace(/\s+/g, "");
+    const normalizedSource = normalize(decodedSource);
+
+    console.log("DEBUG: Filtrando localmente por fuente normalizada:", normalizedSource);
+
+    return arts.filter((article) => {
+      const articleSource = article.source_title || "";
+      const articleSourceNorm = normalize(articleSource);
+      return articleSourceNorm.includes(normalizedSource);
+    });
+  };
+
+  // Filtra artículos localmente según "query"
+  const filterByQuery = (arts, kw) => {
+    if (!kw) return arts;
+    const lowerKw = kw.toLowerCase();
+
+    console.log("DEBUG: Filtrando localmente por query:", lowerKw);
+
+    return arts.filter((article) => {
+      const title = article.title?.toLowerCase() || "";
+      const description = article.description?.toLowerCase() || "";
+      return title.includes(lowerKw) || description.includes(lowerKw);
+    });
+  };
+
   const fetchAllNews = async (currentPage) => {
+    console.log("DEBUG: En fetchAllNews con source =", source);
+
+    // Generamos una clave de caché que no use 'source' (porque filtramos local)
+    const cacheKey = JSON.stringify({ query, language, max, currentPage });
+
+    // Usar caché si existe y no está vacía
+    if (cache.current[cacheKey]) {
+      const { articles, sources, totalPages } = cache.current[cacheKey];
+      if (articles.length > 0 || sources.length > 0) {
+        console.log("▶ Usando caché para:", cacheKey);
+
+        // Aplica filtrado local para source y query
+        let finalArticles = [...articles];
+
+        if (source) {
+          finalArticles = filterBySource(finalArticles, source);
+        }
+        if (query) {
+          finalArticles = filterByQuery(finalArticles, query);
+        }
+
+        // FILTRO PARA "[Removed]"
+        finalArticles = finalArticles.filter((article) => {
+          const t = (article.title || "").trim().toLowerCase();
+          const s = (article.source_title || "").trim().toLowerCase();
+          const d = (article.description || "").trim().toLowerCase();
+          return t !== "[removed]" && s !== "[removed]" && d !== "[removed]";
+        });
+
+        // Deduplicado final
+        const uniqueArticles = Array.from(
+          new Map(
+            finalArticles.map((art) => [
+              `${(art.url || "").trim()}-${(art.title || "").trim()}`,
+              art,
+            ])
+          ).values()
+        );
+
+        setArticles(uniqueArticles);
+        setSources(sources);
+        setTotalPages(totalPages);
+        return;
+      } else {
+        console.log(
+          "▶ La caché para",
+          cacheKey,
+          "tenía 0 resultados. Reintentando fetch..."
+        );
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const [
-        newsDataHubResponse,
-        newsApiResponse,
-        apiTubeResponse,
-      ] = await Promise.all([
-        fetchNewsDataHub(query, language, source, max, currentPage, import.meta.env.VITE_NEWSDATAHUB_API_KEY),
-        fetchNewsApi(query, language, source, max, currentPage, import.meta.env.VITE_NEWSAPI_API_KEY),
-        fetchApiTube(query, language, source, max, currentPage),
+      // Llamamos a las APIs sin pasar 'source' (traemos todo y filtramos local)
+      const results = await Promise.allSettled([
+        fetchNewsDataHub(
+          query,
+          language,
+          "",
+          max,
+          currentPage,
+          import.meta.env.VITE_NEWSDATAHUB_API_KEY
+        ),
+        fetchNewsApi(
+          query,
+          language,
+          "",
+          max,
+          currentPage,
+          import.meta.env.VITE_NEWSAPI_API_KEY
+        ),
+        fetchApiTube(query, language, "", max, currentPage),
       ]);
 
-      // Combinar artículos de las tres fuentes
+      const newsDataHubResponse =
+        results[0].status === "fulfilled"
+          ? results[0].value
+          : { articles: [], totalResults: 0 };
+
+      const newsApiResponse =
+        results[1].status === "fulfilled"
+          ? results[1].value
+          : { articles: [], totalResults: 0 };
+
+      const apiTubeResponse =
+        results[2].status === "fulfilled"
+          ? results[2].value
+          : { articles: [], totalResults: 0 };
+
       let combinedArticles = [
         ...newsDataHubResponse.articles,
         ...newsApiResponse.articles,
         ...apiTubeResponse.articles,
       ];
 
-      // Si se ha seleccionado una fuente, filtrar los artículos
+      console.log("DEBUG: Artículos combinados (antes de filtro local):", combinedArticles);
+
+      // FILTRO LOCAL POR FUENTE
       if (source) {
-        const normalizedSource = source.trim().toLowerCase();
-        combinedArticles = combinedArticles.filter(
-          (article) =>
-            (article.source_title || "").trim().toLowerCase() === normalizedSource
-        );
+        combinedArticles = filterBySource(combinedArticles, source);
       }
 
-      // Filtrar por la query en título o descripción
-      const filteredArticles = combinedArticles.filter((article) => {
-        const kw = query.toLowerCase();
-        const title = article.title?.toLowerCase() || "";
-        const description = article.description?.toLowerCase() || "";
-        return title.includes(kw) || description.includes(kw);
+      // FILTRO LOCAL POR QUERY
+      if (query) {
+        combinedArticles = filterByQuery(combinedArticles, query);
+      }
+
+      // FILTRO PARA "[Removed]"
+      combinedArticles = combinedArticles.filter((article) => {
+        const t = (article.title || "").trim().toLowerCase();
+        const s = (article.source_title || "").trim().toLowerCase();
+        const d = (article.description || "").trim().toLowerCase();
+        return t !== "[removed]" && s !== "[removed]" && d !== "[removed]";
       });
 
-      // Eliminar duplicados basados en la URL del artículo
+      // DEDUPLICADO
       const uniqueArticles = Array.from(
-        new Map(filteredArticles.map((article) => [article.url, article])).values()
+        new Map(
+          combinedArticles.map((art) => [
+            `${(art.url || "").trim()}-${(art.title || "").trim()}`,
+            art,
+          ])
+        ).values()
       );
 
-      setArticles(uniqueArticles);
-
-      // Obtener fuentes sin duplicar
+      // Construir la lista de fuentes
       const combinedSources = Array.from(
         new Map(
           uniqueArticles
@@ -82,39 +213,61 @@ function NewsList({
             .map((src) => [src.name, src])
         ).values()
       );
-      setSources(combinedSources);
 
-      // Calcular total de páginas basado en la suma de totalResults
+      // Calcular total de páginas
       const totalResultsArray = [
         newsDataHubResponse.totalResults,
         newsApiResponse.totalResults,
         apiTubeResponse.totalResults,
       ];
-      const availableTotalResults = totalResultsArray.filter((tr) => tr > 0);
-      const totalResultsSum = availableTotalResults.reduce((acc, tr) => acc + tr, 0);
+      const availableTotalResults = totalResultsArray.filter((t) => t > 0);
+      const totalResultsSum = availableTotalResults.reduce((acc, t) => acc + t, 0);
       const calculatedTotalPages = Math.ceil(totalResultsSum / max) || 1;
+
+      setArticles(uniqueArticles);
+      setSources(combinedSources);
       setTotalPages(calculatedTotalPages);
+
+      // Guardar en caché (con los artículos sin "source" API, pero sí deduplicados)
+      cache.current[cacheKey] = {
+        articles: uniqueArticles,
+        sources: combinedSources,
+        totalPages: calculatedTotalPages,
+      };
     } catch (err) {
       console.error("Error combinando noticias:", err.message);
-      setError(err.message || "Error al cargar las noticias. Por favor, inténtalo de nuevo más tarde.");
+      setError(
+        err.message ||
+          "Error al cargar las noticias. Por favor, inténtalo de nuevo más tarde."
+      );
       setArticles([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Ejecutar la búsqueda cuando cambien query, language, source, max o page
+  // useEffect con TODAS las dependencias
   useEffect(() => {
-    fetchAllNews(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, language, source, max, page]);
+    console.log(
+      "DEBUG: useEffect disparado. query=%s, language=%s, source=%s, max=%s, page=%s",
+      query,
+      language,
+      source,
+      max,
+      page
+    );
 
-  // Manejar cambio de página
+    const timer = setTimeout(() => {
+      fetchAllNews(page);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query, language, source, max, page]); // Importante no ignorar 'source'
+
   const handlePageChange = (newPage) => {
     setPage(newPage);
   };
 
-  // Manejar cambio de fuente: se actualiza a través de la función pasada por props.
   const handleSourceChange = (selectedSource) => {
     if (setSource) {
       setSource(selectedSource);
@@ -149,9 +302,12 @@ function NewsList({
               </div>
             ))}
           </div>
-          {/* Paginación */}
           <div className="d-flex justify-content-center">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>

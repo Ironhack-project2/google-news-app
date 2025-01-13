@@ -11,10 +11,9 @@ function App() {
   const keyword = searchParams.get("query") || "";
   const selectedSource = searchParams.get("source") || "";
   const max = parseInt(searchParams.get("max") || "20", 10);
-  // Se extrae la página; si no existe, se asume "1"
   const page = searchParams.get("page") || "1";
 
-  // Función para actualizar los parámetros usando un callback
+  // Función para actualizar params
   const updateSearchParams = (newParams) => {
     setSearchParams((prevParams) => {
       const updatedParams = new URLSearchParams(prevParams);
@@ -29,9 +28,9 @@ function App() {
     });
   };
 
-  // Función que reinicia todos los parámetros a sus valores por defecto, incluyendo page.
+  // Reset: dejar la URL sin parámetros (http://localhost:5173/)
   const resetSearch = () => {
-    updateSearchParams({ query: "", language: "en", source: "", page: "1" });
+    setSearchParams({});
   };
 
   return (

@@ -6,33 +6,27 @@ const SourceFilter = ({ availableOutlets, setSelectedSource }) => {
   }
 
   const handleSelection = (source) => {
-    setSelectedSource(source);
+    const encoded = encodeURIComponent(source);
+    setSelectedSource(encoded);
   };
 
   return (
     <div className="list-group">
       <h5 className="mb-3 fw-bold text-dark">Medios Disponibles</h5>
-      {availableOutlets.map((outlet) => (
-        <button
-          key={typeof outlet === "object" ? outlet.id : outlet}
-          className="list-group-item list-group-item-action border-0 py-2"
-          style={{
-            borderBottom: "1px solid #e0e0e0", 
-            transition: "background-color 0.2s ease", 
-          }}
-          onClick={() =>
-            handleSelection(typeof outlet === "object" ? outlet.id : outlet)
-          }
-          onMouseEnter={(e) =>
-            (e.target.style.backgroundColor = "#f8f9fa") 
-          }
-          onMouseLeave={(e) =>
-            (e.target.style.backgroundColor = "transparent") 
-          }
-        >
-          <strong>{typeof outlet === "object" ? outlet.name : outlet}</strong>
-        </button>
-      ))}
+      {availableOutlets.map((outlet) => {
+        const label = typeof outlet === "object" ? outlet.name : outlet;
+        const value = typeof outlet === "object" ? outlet.id : outlet;
+
+        return (
+          <button
+            key={value}
+            className="list-group-item list-group-item-action list-group-item-light mb-2 border-0"
+            onClick={() => handleSelection(value)}
+          >
+            <strong>{label}</strong>
+          </button>
+        );
+      })}
     </div>
   );
 };

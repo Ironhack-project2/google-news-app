@@ -6,11 +6,8 @@ const Footer = () => {
   return (
     <footer className="bg-light text-center py-2 footer-container">
       <div className="container">
-        <p className="mb-1">
-          Website &copy; Mar & Mónica {currentYear}
-        </p>
-        <p className="mb-1">
-          All other materials are copyrighted 
+        <p className="mb-1">Website &copy; Mar & Mónica {currentYear}</p>
+        <p className="mb-1">All other materials are copyrighted 
           by their respective holders.
         </p>
         <a
@@ -30,7 +27,7 @@ const Footer = () => {
             className="d-inline-block"
           >
             News Data Hub
-          </a>{""}
+          </a>
           ,{" "}
           <a
             href="https://newsapi.org/"
@@ -39,7 +36,7 @@ const Footer = () => {
             className="d-inline-block"
           >
             News API
-            </a>{" "}
+          </a>{" "}
           and{" "}
           <a
             href="https://apitube.io/"

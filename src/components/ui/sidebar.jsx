@@ -13,7 +13,6 @@ const Sidebar = ({ sources, setSelectedSource }) => {
       return [];
     }
 
-    // Filtrar las fuentes excluyendo las definidas en EXCLUDED_NAMES
     const filteredSources = sources.filter((src) => {
       if (typeof src === "object" && src !== null && "name" in src) {
         return !EXCLUDED_NAMES.includes(src.name);
@@ -26,10 +25,9 @@ const Sidebar = ({ sources, setSelectedSource }) => {
 
     if (filteredSources.length === 0) return [];
 
-    // Crear una copia del array para evitar mutación in-place
     const sourcesCopy = [...filteredSources];
 
-    // Determinar el tipo de elementos en sourcesCopy y ordenar en consecuencia
+    // Ordenar por nombre
     if (
       typeof sourcesCopy[0] === "object" &&
       sourcesCopy[0] !== null &&
@@ -49,7 +47,7 @@ const Sidebar = ({ sources, setSelectedSource }) => {
     return sourcesCopy;
   }, [sources]);
 
-  // Depuración: Verificar el contenido de sortedFilteredSources
+  // Solo para debug
   useMemo(() => {
     console.log("sortedFilteredSources:", sortedFilteredSources);
   }, [sortedFilteredSources]);
@@ -61,11 +59,11 @@ const Sidebar = ({ sources, setSelectedSource }) => {
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ 
+      style={{
         transition: "background-color 0.3s ease",
         maxHeight: "calc(100vh - 150px)",
         overflowY: "auto",
-        borderRight: "1px solid #ddd",  
+        borderRight: "1px solid #ddd",
       }}
     >
       <SourceFilter
